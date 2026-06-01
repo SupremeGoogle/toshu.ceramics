@@ -19,7 +19,14 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { ImageGallery, type GalleryImage } from "@/components/ui/image-gallery";
 
 type Product = {
@@ -183,6 +190,7 @@ function PublicSite({ content }: { content: SiteContent }) {
 
   return (
     <div className="min-h-dvh overflow-hidden bg-background">
+      <RouteSeo content={content} />
       <Header
         content={content}
         menuOpen={menuOpen}
@@ -215,6 +223,90 @@ function PublicSite({ content }: { content: SiteContent }) {
       <Footer content={content} />
     </div>
   );
+}
+
+function RouteSeo({ content }: { content: SiteContent }) {
+  const location = useLocation();
+
+  useEffect(() => {
+    const origin = "https://toshu.ru";
+    const seoByPath: Record<string, { title: string; description: string }> = {
+      "/": {
+        title: content.seo.title,
+        description: content.seo.description,
+      },
+      "/catalog": {
+        title: "Каталог керамики ручной работы | Toshu Ceramics",
+        description:
+          "Каталог Toshu Ceramics: чашки, пиалы, тарелки, вазы и интерьерная керамика ручной работы в Москве.",
+      },
+      "/about": {
+        title: "О мастерской | Toshu Ceramics",
+        description:
+          "Toshu Ceramics — московская керамическая мастерская с ручной работой, спокойными формами и живой тактильной поверхностью.",
+      },
+      "/certificate": {
+        title: "Подарочный сертификат на керамику | Toshu Ceramics",
+        description:
+          "Подарочный сертификат Toshu Ceramics на изделие ручной работы, индивидуальный заказ или авторский мастер-класс.",
+      },
+      "/custom": {
+        title: "Керамика на заказ в Москве | Toshu Ceramics",
+        description:
+          "Изделия на заказ: комплекты посуды, вазы, декор и индивидуальные керамические предметы под интерьер.",
+      },
+      "/workshops": {
+        title: "Мастер-классы по керамике в Москве | Toshu Ceramics",
+        description:
+          "Авторские мастер-классы Toshu Ceramics: гончарный круг, ручная лепка и роспись керамики для взрослых и детей.",
+      },
+      "/partners": {
+        title: "Сотрудничество и партнёрам | Toshu Ceramics",
+        description:
+          "Сотрудничество с Toshu Ceramics: интерьерные проекты, корпоративные подарки, шоурумы, рестораны и совместные коллекции.",
+      },
+      "/contacts": {
+        title: "Контакты | Toshu Ceramics",
+        description:
+          "Контакты Toshu Ceramics: мастерская в Москве, запись на мастер-классы, заявки на изделия и сотрудничество.",
+      },
+    };
+    const seo = seoByPath[location.pathname] ?? seoByPath["/"];
+    const url = `${origin}${location.pathname === "/" ? "/" : location.pathname}`;
+
+    document.title = seo.title;
+    setMeta("name", "description", seo.description);
+    setMeta("property", "og:title", seo.title);
+    setMeta("property", "og:description", seo.description);
+    setMeta("property", "og:url", url);
+    setMeta("name", "twitter:title", seo.title);
+    setMeta("name", "twitter:description", seo.description);
+    setCanonical(url);
+  }, [content, location.pathname]);
+
+  return null;
+}
+
+function setMeta(attribute: "name" | "property", key: string, content: string) {
+  let element = document.querySelector<HTMLMetaElement>(
+    `meta[${attribute}="${key}"]`,
+  );
+  if (!element) {
+    element = document.createElement("meta");
+    element.setAttribute(attribute, key);
+    document.head.appendChild(element);
+  }
+  element.setAttribute("content", content);
+}
+
+function setCanonical(href: string) {
+  let element = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+  if (!element) {
+    element = document.createElement("link");
+    element.rel = "canonical";
+    document.head.appendChild(element);
+  }
+  element.href = href;
 }
 
 function Header({
