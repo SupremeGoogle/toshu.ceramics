@@ -1,21 +1,15 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  Brush,
-  Check,
-  Circle,
   Camera,
   ExternalLink,
   Gift,
-  Handshake,
   Mail,
   MapPin,
   Menu,
   MessageCircle,
   Phone,
-  Search,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -104,9 +98,6 @@ const navItems = [
   { href: "/catalog", label: "Каталог" },
   { href: "/about", label: "О нас" },
   { href: "/certificate", label: "Сертификат" },
-  { href: "/custom", label: "На заказ" },
-  { href: "/workshops", label: "Мастер-классы" },
-  { href: "/partners", label: "Партнёрам" },
   { href: "/contacts", label: "Контакты" },
 ];
 
@@ -117,9 +108,6 @@ const blockOptions: Array<{ key: keyof SiteContent; label: string }> = [
   { key: "gallery", label: "Галерея" },
   { key: "about", label: "О мастерской" },
   { key: "certificate", label: "Сертификат" },
-  { key: "custom", label: "Изделия на заказ" },
-  { key: "workshops", label: "Мастер-классы" },
-  { key: "partners", label: "Партнёры" },
   { key: "seo", label: "SEO" },
 ];
 
@@ -198,25 +186,16 @@ function PublicSite({ content }: { content: SiteContent }) {
       />
       <main id="content">
         <Routes>
-          <Route path="/" element={<HomePage content={content} />} />
-          <Route path="/catalog" element={<CatalogPage content={content} />} />
-          <Route path="/about" element={<AboutPage content={content} />} />
-          <Route
-            path="/certificate"
-            element={<CertificatePage content={content} />}
-          />
-          <Route path="/custom" element={<CustomPage content={content} />} />
-          <Route
-            path="/workshops"
-            element={<WorkshopsPage content={content} />}
-          />
-          <Route
-            path="/partners"
-            element={<PartnersPage content={content} />}
-          />
-          <Route
-            path="/contacts"
-            element={<ContactsPage content={content} />}
+      <Route path="/" element={<HomePage content={content} />} />
+      <Route path="/catalog" element={<CatalogPage content={content} />} />
+      <Route path="/about" element={<AboutPage content={content} />} />
+      <Route
+        path="/certificate"
+        element={<CertificatePage content={content} />}
+      />
+      <Route
+        path="/contacts"
+        element={<ContactsPage content={content} />}
           />
         </Routes>
       </main>
@@ -250,25 +229,10 @@ function RouteSeo({ content }: { content: SiteContent }) {
         description:
           "Подарочный сертификат Toshu Ceramics на изделие ручной работы, индивидуальный заказ или авторский мастер-класс.",
       },
-      "/custom": {
-        title: "Керамика на заказ в Москве | Toshu Ceramics",
-        description:
-          "Изделия на заказ: комплекты посуды, вазы, декор и индивидуальные керамические предметы под интерьер.",
-      },
-      "/workshops": {
-        title: "Мастер-классы по керамике в Москве | Toshu Ceramics",
-        description:
-          "Авторские мастер-классы Toshu Ceramics: гончарный круг, ручная лепка и роспись керамики для взрослых и детей.",
-      },
-      "/partners": {
-        title: "Сотрудничество и партнёрам | Toshu Ceramics",
-        description:
-          "Сотрудничество с Toshu Ceramics: интерьерные проекты, корпоративные подарки, шоурумы, рестораны и совместные коллекции.",
-      },
       "/contacts": {
         title: "Контакты | Toshu Ceramics",
         description:
-          "Контакты Toshu Ceramics: мастерская в Москве, запись на мастер-классы, заявки на изделия и сотрудничество.",
+          "Контакты Toshu Ceramics: мастерская в Москве, заявки на изделия, подарочные сертификаты и сотрудничество.",
       },
     };
     const seo = seoByPath[location.pathname] ?? seoByPath["/"];
@@ -396,8 +360,6 @@ function HomePage({ content }: { content: SiteContent }) {
       <FeaturedCatalog content={content} />
       <AboutPreview content={content} />
       <GallerySection content={content} />
-      <WorkshopsPreview content={content} />
-      <PartnersPreview content={content} />
       <ContactBand content={content} leadType="catalog" />
     </>
   );
@@ -437,7 +399,7 @@ function Hero({ content }: { content: SiteContent }) {
               {content.hero.primaryCta}
               <ArrowRight size={17} aria-hidden="true" />
             </Link>
-            <Link className="soft-button" to="/workshops">
+            <Link className="soft-button" to="/contacts">
               {content.hero.secondaryCta}
             </Link>
           </div>
@@ -480,59 +442,14 @@ function FeaturedCatalog({ content }: { content: SiteContent }) {
 }
 
 function CatalogPage({ content }: { content: SiteContent }) {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("Все");
-  const categories = useMemo(
-    () => ["Все", ...Array.from(new Set(content.products.map((p) => p.category)))],
-    [content.products],
-  );
-  const filtered = content.products.filter((product) => {
-    const matchesCategory = category === "Все" || product.category === category;
-    const matchesQuery = `${product.title} ${product.description}`
-      .toLowerCase()
-      .includes(query.toLowerCase());
-    return matchesCategory && matchesQuery;
-  });
-
   return (
     <section className="section-shell">
       <PageTitle
         eyebrow="Каталог"
         title="Изделия мастерской"
-        text="Фильтруйте по типу изделия или напишите нам, если хотите повторить форму под себя."
+        text="Небольшие партии посуды, ваз и интерьерных предметов ручной работы. Если изделие уже забронировано, мы можем обсудить повтор в близкой форме и глазури."
       />
-      <search className="mb-8 grid gap-3 rounded-[28px] border bg-white/45 p-4 shadow-sm md:grid-cols-[1fr_auto]">
-        <label className="relative block">
-          <Search
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-foreground/48"
-            size={18}
-            aria-hidden="true"
-          />
-          <span className="sr-only">Поиск по каталогу</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Поиск по названию или описанию"
-            className="min-h-12 w-full rounded-full border bg-background/60 pl-11 pr-4"
-            type="search"
-          />
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                item === category ? "bg-primary text-primary-foreground" : "bg-white/50"
-              }`}
-              onClick={() => setCategory(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </search>
-      <ProductGrid products={filtered} />
+      <ProductGrid products={content.products} />
       <ContactBand content={content} leadType="catalog" compact />
     </section>
   );
@@ -661,136 +578,6 @@ function CertificatePage({ content }: { content: SiteContent }) {
   );
 }
 
-function CustomPage({ content }: { content: SiteContent }) {
-  return (
-    <section className="section-shell">
-      <PageTitle
-        eyebrow="Изделия на заказ"
-        title={content.custom.title}
-        text={content.custom.text}
-      />
-      <div className="grid gap-4 md:grid-cols-4">
-        {content.custom.steps.map((step, index) => (
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="rounded-[28px] border bg-white/45 p-5"
-          >
-            <div className="font-display text-4xl font-semibold text-primary">
-              0{index + 1}
-            </div>
-            <p className="mt-4 font-semibold">{step}</p>
-          </motion.div>
-        ))}
-      </div>
-      <ContactBand content={content} leadType="custom" compact />
-    </section>
-  );
-}
-
-function WorkshopsPage({ content }: { content: SiteContent }) {
-  return (
-    <section className="section-shell">
-      <PageTitle
-        eyebrow="Обучение"
-        title="Авторские мастер-классы"
-        text="Попробуйте себя в гончарном деле и ручной лепке. Все материалы и обжиги включены."
-      />
-      <WorkshopCards workshops={content.workshops} />
-      <ContactBand content={content} leadType="workshop" compact />
-    </section>
-  );
-}
-
-function WorkshopsPreview({ content }: { content: SiteContent }) {
-  return (
-    <section className="section-shell">
-      <SectionIntro
-        eyebrow="Мастер-классы"
-        title="Глина как способ замедлиться"
-        text="Камерные занятия для взрослых и детей: гончарный круг, ручная лепка и роспись."
-        cta={{ label: "Выбрать занятие", href: "/workshops" }}
-      />
-      <WorkshopCards workshops={content.workshops} />
-    </section>
-  );
-}
-
-function WorkshopCards({ workshops }: { workshops: Workshop[] }) {
-  const icons = {
-    circle: <Circle size={22} />,
-    sparkle: <Sparkles size={22} />,
-    brush: <Brush size={22} />,
-  };
-
-  return (
-    <div className="grid gap-5 md:grid-cols-3">
-      {workshops.map((workshop) => (
-        <FeatureCard
-          key={workshop.title}
-          icon={icons[workshop.icon]}
-          title={workshop.title}
-          text={workshop.description}
-        />
-      ))}
-    </div>
-  );
-}
-
-function PartnersPage({ content }: { content: SiteContent }) {
-  return (
-    <section className="section-shell">
-      <PageTitle
-        eyebrow="Партнёрам"
-        title={content.partners.title}
-        text={content.partners.text}
-      />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {content.partners.items.map((item) => (
-          <FeatureCard
-            key={item}
-            icon={<Handshake size={22} />}
-            title={item}
-            text="Обсудим формат, сроки, тираж и визуальную задачу проекта."
-          />
-        ))}
-      </div>
-      <ContactBand content={content} leadType="partner" compact />
-    </section>
-  );
-}
-
-function PartnersPreview({ content }: { content: SiteContent }) {
-  return (
-    <section className="section-shell rounded-[42px]">
-      <div className="grid gap-8 rounded-[36px] border bg-secondary p-6 text-secondary-foreground shadow-soft md:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-normal opacity-80">
-            Сотрудничество
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold md:text-5xl">
-            {content.partners.title}
-          </h2>
-          <p className="mt-5 leading-8 opacity-82">{content.partners.text}</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {content.partners.items.map((item) => (
-            <div
-              key={item}
-              className="rounded-[24px] border border-white/18 bg-white/10 p-5"
-            >
-              <Check size={18} aria-hidden="true" />
-              <p className="mt-4 font-semibold">{item}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ContactsPage({ content }: { content: SiteContent }) {
   return (
     <section className="section-shell grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
@@ -819,7 +606,7 @@ function GallerySection({ content }: { content: SiteContent }) {
       <SectionIntro
         eyebrow="Галерея"
         title="Фактура, свет и живой край"
-        text="Pinterest-настроение для архива работ, процесса и будущих коллекций. Фото можно заменить в админке."
+        text="Живые поверхности, следы ручной работы и спокойный свет, в котором лучше всего раскрываются форма и глазурь."
       />
       <ImageGallery images={content.gallery} />
     </section>

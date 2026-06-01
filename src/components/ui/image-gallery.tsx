@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useInView } from "framer-motion";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from "@/lib/utils";
 
 export interface GalleryImage {
@@ -17,25 +16,16 @@ interface ImageGalleryProps {
 }
 
 export function ImageGallery({ images }: ImageGalleryProps) {
-  const columns = [0, 1, 2].map((col) =>
-    images.filter((_, index) => index % 3 === col),
-  );
-
   return (
-    <div className="relative flex w-full flex-col items-center justify-center py-8">
-      <div className="mx-auto grid w-full max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-        {columns.map((column, col) => (
-          <div key={col} className="grid content-start gap-4 lg:gap-6">
-            {column.map((image, index) => (
-              <AnimatedImage
-                key={`${image.src}-${index}`}
-                alt={image.alt}
-                src={image.src}
-                ratio={image.ratio ?? (index % 2 === 0 ? 4 / 5 : 1)}
-                placeholder={image.placeholder}
-              />
-            ))}
-          </div>
+    <div className="relative w-full py-8">
+      <div className="mx-auto w-full max-w-7xl columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
+        {images.map((image, index) => (
+          <AnimatedImage
+            key={`${image.src}-${index}`}
+            alt={image.alt}
+            src={image.src}
+            placeholder={image.placeholder}
+          />
         ))}
       </div>
     </div>
@@ -47,13 +37,11 @@ interface AnimatedImageProps {
   src: string;
   className?: string;
   placeholder?: string;
-  ratio: number;
 }
 
 function AnimatedImage({
   alt,
   src,
-  ratio,
   placeholder,
   className,
 }: AnimatedImageProps) {
@@ -69,11 +57,10 @@ function AnimatedImage({
   };
 
   return (
-    <AspectRatio
+    <figure
       ref={ref}
-      ratio={ratio}
       className={cn(
-        "relative size-full overflow-hidden rounded-[22px] border bg-accent shadow-soft",
+        "relative break-inside-avoid overflow-hidden rounded-[24px] border bg-accent shadow-soft transition duration-500 hover:-translate-y-1",
         className,
       )}
     >
@@ -81,7 +68,7 @@ function AnimatedImage({
         alt={alt}
         src={imgSrc}
         className={cn(
-          "size-full object-cover opacity-0 transition duration-500 ease-out",
+          "block h-auto w-full opacity-0 transition duration-500 ease-out",
           {
             "opacity-100": isInView && !isLoading,
           },
@@ -91,6 +78,6 @@ function AnimatedImage({
         decoding="async"
         onError={handleError}
       />
-    </AspectRatio>
+    </figure>
   );
 }
