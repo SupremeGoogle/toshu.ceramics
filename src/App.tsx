@@ -291,8 +291,14 @@ function Header({
         Перейти к содержанию
       </a>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="font-display text-2xl font-semibold">
-          {content.brand.name}
+        <Link to="/" className="inline-flex items-center" aria-label={content.brand.name}>
+          <img
+            src="/brand-logo.png"
+            alt={content.brand.name}
+            width="900"
+            height="340"
+            className="h-10 w-auto max-w-[142px] object-contain"
+          />
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
           {navItems.map((item) => (
@@ -1081,9 +1087,13 @@ function Footer({ content }: { content: SiteContent }) {
     <footer className="border-t bg-foreground text-background">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_auto] lg:px-8">
         <div>
-          <div className="font-display text-3xl font-semibold">
-            {content.brand.name}
-          </div>
+          <img
+            src="/brand-logo.png"
+            alt={content.brand.name}
+            width="900"
+            height="340"
+            className="h-12 w-auto max-w-[170px] object-contain invert"
+          />
           <p className="mt-3 max-w-xl text-sm leading-6 text-background/70">
             {content.brand.description}
           </p>
