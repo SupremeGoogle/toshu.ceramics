@@ -850,8 +850,8 @@ function ContactBand({
             Обсудим изделие, занятие или сотрудничество
           </h2>
           <p className="mt-4 leading-7 text-foreground/68">
-            Форма отправится в Google Sheets после настройки Apps Script и
-            переменной `GOOGLE_SCRIPT_URL` на Vercel.
+            Оставьте контакты и коротко расскажите, что вам интересно. Мы
+            вернёмся с ответом и поможем выбрать подходящий формат.
           </p>
         </div>
         <LeadForm content={content} type={leadType} />
@@ -995,13 +995,13 @@ function AdminPage({
     onDraftChange(next);
   }
 
-  async function saveToGitHub() {
+  async function saveContent() {
     if (!parsedDraft) {
       setStatus("JSON содержит ошибку. Проверьте текущий блок.");
       return;
     }
 
-    setStatus("Сохраняем изменения в GitHub...");
+    setStatus("Сохраняем изменения...");
     const response = await fetch("/api/save-content", {
       method: "POST",
       headers: {
@@ -1018,7 +1018,7 @@ function AdminPage({
     }
 
     localStorage.removeItem("toshu-content-draft");
-    setStatus("Готово. Изменения отправлены в GitHub, Vercel подхватит деплой.");
+    setStatus("Готово. Изменения сохранены и скоро появятся на сайте.");
   }
 
   if (!isUnlocked) {
@@ -1037,8 +1037,8 @@ function AdminPage({
             Панель Toshu
           </h1>
           <p className="mt-3 text-sm leading-6 text-foreground/66">
-            Пароль проверяется сервером при сохранении. Для Vercel задайте
-            `ADMIN_PASSWORD`.
+            Войдите, чтобы обновлять тексты, изображения, каталог и контактные
+            данные сайта.
           </p>
           <Field
             className="mt-6"
@@ -1083,10 +1083,10 @@ function AdminPage({
               rel="noreferrer"
               aria-disabled={!parsedDraft?.brand.leadsSheetUrl}
             >
-              Заявки в Google Sheets
+              Открыть заявки
             </a>
-            <button className="clay-button" type="button" onClick={saveToGitHub}>
-              Сохранить в GitHub
+            <button className="clay-button" type="button" onClick={saveContent}>
+              Сохранить изменения
             </button>
           </div>
         </div>
