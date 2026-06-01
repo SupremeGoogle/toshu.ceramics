@@ -81,9 +81,9 @@ function AnimatedImage({
         alt={alt}
         src={imgSrc}
         className={cn(
-          "size-full object-cover opacity-0 blur-sm transition duration-1000 ease-out",
+          "size-full object-cover opacity-0 transition duration-500 ease-out",
           {
-            "opacity-100 blur-0": isInView && !isLoading,
+            "opacity-100": isInView && !isLoading,
           },
         )}
         onLoad={() => setIsLoading(false)}
