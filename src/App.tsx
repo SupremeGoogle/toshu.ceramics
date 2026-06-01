@@ -132,9 +132,16 @@ function SiteDataProvider() {
           return;
         }
 
-        const response = await fetch("/content/site.json", {
+        let response = await fetch("/api/get-content", {
           cache: "no-store",
         });
+
+        if (!response.ok) {
+          response = await fetch("/content/site.json", {
+            cache: "no-store",
+          });
+        }
+
         if (!response.ok) {
           throw new Error("Content request failed");
         }

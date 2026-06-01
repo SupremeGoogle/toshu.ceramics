@@ -1,17 +1,33 @@
 # Deploy, Admin, Forms
 
-## GitHub Token
+## Supabase Content
 
-Do not commit GitHub tokens into this repository or paste them into frontend code.
-Set the token only in Vercel Environment Variables:
+Run this SQL in Supabase SQL Editor:
 
-- `GITHUB_TOKEN`: fine-grained token with Contents Read/Write for `SupremeGoogle/toshu.ceramics`
-- `GITHUB_REPO`: `SupremeGoogle/toshu.ceramics`
-- `GITHUB_BRANCH`: `main`
+```sql
+create table site_content (
+  id int primary key,
+  content jsonb not null
+);
+
+alter table site_content enable row level security;
+
+create policy "read" on site_content for select using (true);
+create policy "write" on site_content for insert with check (true);
+create policy "update" on site_content for update using (true);
+```
+
+The same SQL is stored in `docs/supabase-site-content.sql`.
+
+Set these in Vercel Environment Variables:
+
 - `ADMIN_PASSWORD`: password for `/admin`
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key for server-side saves
+- `SUPABASE_ANON_KEY`: optional fallback key for reads
 - `GOOGLE_SCRIPT_URL`: deployed Google Apps Script Web App URL
 
-If a token was pasted into chat or a public place, revoke it and create a new one.
+`GITHUB_TOKEN`, `GITHUB_REPO`, and `GITHUB_BRANCH` are now only fallback options if Supabase is not configured.
 
 ## Google Sheets
 
@@ -27,8 +43,7 @@ If a token was pasted into chat or a public place, revoke it and create a new on
 ## Admin
 
 Open `/admin`, enter `ADMIN_PASSWORD`, edit content blocks, then click
-`Сохранить в GitHub`. The API commits `public/content/site.json`, and Vercel
-starts a new deployment from GitHub.
+`Сохранить изменения`. The API writes the JSON to `site_content` row `id = 1`.
 
 ## Images
 
