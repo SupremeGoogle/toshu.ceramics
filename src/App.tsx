@@ -843,13 +843,17 @@ function PrivacyPage({ content }: { content: SiteContent }) {
 
 function GallerySection({ content }: { content: SiteContent }) {
   return (
-    <section className="section-shell" aria-labelledby="gallery-title">
-      <SectionIntro
-        eyebrow="Галерея"
-        title="Фактура, свет и живой край"
-        text="Живые поверхности, следы ручной работы и спокойный свет, в котором лучше всего раскрываются форма и глазурь."
-      />
-      <ImageGallery images={content.gallery} />
+    <section aria-labelledby="gallery-title">
+      <div className="section-shell pb-6">
+        <SectionIntro
+          eyebrow="Галерея"
+          title="Фактура, свет и живой край"
+          text="Живые поверхности, следы ручной работы и спокойный свет, в котором лучше всего раскрываются форма и глазурь."
+        />
+      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 lg:pb-24">
+        <ImageGallery images={content.gallery} />
+      </div>
     </section>
   );
 }
