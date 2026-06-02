@@ -516,6 +516,9 @@ function ProductGrid({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const stickyRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const xRef = useRef(0);
+  const maxShiftRef = useRef(0);
+  const manualScrollRef = useRef(false);
   const [scrollState, setScrollState] = useState({ height: 0, x: 0 });
 
   useEffect(() => {
@@ -539,11 +542,56 @@ function ProductGrid({
       const travel = Math.max(height - stickyHeight, 1);
       const rect = wrapper.getBoundingClientRect();
       const progress = Math.min(1, Math.max(0, -rect.top / travel));
+      maxShiftRef.current = maxShift;
 
+      if (manualScrollRef.current) {
+        xRef.current = Math.min(xRef.current, maxShift);
+        setScrollState({
+          height,
+          x: Math.round(xRef.current),
+        });
+        return;
+      }
+
+      xRef.current = progress * maxShift;
       setScrollState({
         height,
-        x: Math.round(progress * maxShift),
+        x: Math.round(xRef.current),
       });
+    }
+
+    function handleWheel(event: WheelEvent) {
+      const wrapper = scrollRef.current;
+      const sticky = stickyRef.current;
+
+      if (!wrapper || !sticky || window.innerWidth < 1024) return;
+
+      const rect = wrapper.getBoundingClientRect();
+      const stickyTop = 96;
+      const isPinned =
+        rect.top <= stickyTop && rect.bottom >= stickyTop + sticky.offsetHeight;
+
+      if (!isPinned) return;
+
+      const delta =
+        Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+          ? event.deltaY
+          : event.deltaX;
+      const maxShift = maxShiftRef.current;
+      const currentX = xRef.current;
+      const canMoveForward = delta > 0 && currentX < maxShift;
+      const canMoveBack = delta < 0 && currentX > 0;
+
+      if (!canMoveForward && !canMoveBack) return;
+
+      event.preventDefault();
+      manualScrollRef.current = true;
+      const nextX = Math.min(maxShift, Math.max(0, currentX + delta * 1.15));
+      xRef.current = nextX;
+      setScrollState((previous) => ({
+        ...previous,
+        x: Math.round(nextX),
+      }));
     }
 
     function scheduleUpdate() {
@@ -552,13 +600,18 @@ function ProductGrid({
     }
 
     update();
+    const stickyNode = stickyRef.current;
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
+    stickyNode?.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
 
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
+      stickyNode?.removeEventListener("wheel", handleWheel);
     };
   }, [isScroll, products.length]);
 
