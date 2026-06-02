@@ -29,7 +29,7 @@ export default {
       },
       fontFamily: {
         display: ["Cormorant Garamond", "Georgia", "serif"],
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       boxShadow: {
         soft: "0 24px 80px rgb(68 47 35 / 0.14)",

@@ -841,13 +841,17 @@ function PrivacyPage({ content }: { content: SiteContent }) {
 
 function GallerySection({ content }: { content: SiteContent }) {
   return (
-    <section className="section-shell" aria-labelledby="gallery-title">
-      <SectionIntro
-        eyebrow="Галерея"
-        title="Фактура, свет и живой край"
-        text="Живые поверхности, следы ручной работы и спокойный свет, в котором лучше всего раскрываются форма и глазурь."
-      />
-      <ImageGallery images={content.gallery} />
+    <section aria-labelledby="gallery-title">
+      <div className="section-shell pb-4">
+        <SectionIntro
+          eyebrow="Галерея"
+          title="Фактура, свет и живой край"
+          text="Живые поверхности, следы ручной работы и спокойный свет, в котором лучше всего раскрываются форма и глазурь."
+        />
+      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <ImageGallery images={content.gallery} />
+      </div>
     </section>
   );
 }
@@ -869,16 +873,20 @@ function ContactBand({
           : "section-shell"
       }
     >
-      <div className="grid gap-8 rounded-[36px] border bg-white/50 p-5 shadow-soft md:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-        <div>
-          <p className="eyebrow">Заявка</p>
+      <div className="liquid-glass grid gap-8 p-5 md:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+        <div className="liquid-content">
+          <p className="eyebrow">Обратная связь</p>
           <h2 className="mt-4 font-display text-4xl font-semibold">
             Обсудим изделие, занятие или сотрудничество
           </h2>
-          <p className="mt-4 leading-7 text-foreground/68">
+          <p className="mt-4 max-w-md text-[1.02rem] font-medium leading-8 text-foreground/70">
             Оставьте контакты и коротко расскажите, что вам интересно. Мы
             вернёмся с ответом и поможем выбрать подходящий формат.
           </p>
+          <div className="mt-6 grid gap-2 text-sm font-semibold text-foreground/62">
+            <span>Ответим бережно и по делу</span>
+            <span>Без рассылок и лишних сообщений</span>
+          </div>
         </div>
         <LeadForm content={content} type={leadType} />
       </div>
@@ -938,9 +946,9 @@ function LeadForm({
 
   if (isSuccess) {
     return (
-      <div className="grid gap-3">
+      <div className="liquid-content grid gap-3">
         <div
-          className="rounded-[26px] border bg-white/70 p-5"
+          className="rounded-[28px] border border-white/60 bg-white/60 p-6 shadow-sm backdrop-blur-xl"
           role="status"
           aria-live="polite"
         >
@@ -966,7 +974,7 @@ function LeadForm({
   }
 
   return (
-    <form className="grid gap-3" onSubmit={handleSubmit}>
+    <form className="liquid-content grid gap-4" onSubmit={handleSubmit}>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Имя" name="name" required />
         <Field label="Телефон" name="phone" type="tel" required />
@@ -977,7 +985,7 @@ function LeadForm({
         <select
           name="interest"
           defaultValue={type}
-          className="min-h-12 rounded-2xl border bg-background/70 px-4"
+          className="liquid-field appearance-none"
         >
           <option value="catalog">Каталог / покупка</option>
           <option value="workshop">Мастер-класс</option>
@@ -991,11 +999,11 @@ function LeadForm({
         <textarea
           name="message"
           rows={4}
-          className="rounded-2xl border bg-background/70 px-4 py-3"
+          className="liquid-field min-h-32 resize-y py-3 leading-7"
           placeholder="Что хотите обсудить?"
         />
       </label>
-      <label className="flex gap-3 rounded-2xl border bg-background/50 p-3 text-sm leading-6 text-foreground/70">
+      <label className="flex gap-3 rounded-[22px] border border-white/50 bg-white/40 p-4 text-sm font-medium leading-6 text-foreground/72 shadow-sm backdrop-blur-xl">
         <input
           className="mt-1 size-4 shrink-0 accent-primary"
           type="checkbox"
@@ -1011,12 +1019,12 @@ function LeadForm({
           </Link>
         </span>
       </label>
-      <button className="clay-button" type="submit" disabled={isSubmitting}>
+      <button className="liquid-submit" type="submit" disabled={isSubmitting}>
         <Send size={17} aria-hidden="true" />
         {isSubmitting ? "Отправляем..." : "Отправить заявку"}
       </button>
       {status ? (
-        <p className="rounded-2xl bg-white/60 p-3 text-sm text-foreground/72">
+        <p className="rounded-[22px] border border-white/50 bg-white/60 p-4 text-sm font-medium text-foreground/72 backdrop-blur-xl">
           {status}
         </p>
       ) : null}
@@ -1584,13 +1592,22 @@ function Field({
   return (
     <label className={`grid gap-2 text-sm font-semibold ${className}`}>
       {label}
-      <input
-        name={name}
-        type={type}
-        required={required}
-        value={value}
-        onChange={onChange ? (event) => onChange(event.target.value) : undefined}
-        className="min-h-12 rounded-2xl border bg-background/70 px-4"
+        <input
+          name={name}
+          type={type}
+          required={required}
+          autoComplete={
+            name === "name"
+              ? "name"
+              : name === "phone"
+                ? "tel"
+                : name === "email"
+                  ? "email"
+                  : undefined
+          }
+          value={value}
+          onChange={onChange ? (event) => onChange(event.target.value) : undefined}
+          className="liquid-field"
       />
     </label>
   );
