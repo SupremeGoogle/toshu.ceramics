@@ -82,7 +82,7 @@ export const ContainerSticky = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "sticky left-0 top-0 min-h-[30rem] w-full overflow-hidden",
+      "sticky left-0 top-0 min-h-[75vh] w-full overflow-hidden",
       className,
     )}
     style={{
@@ -103,13 +103,13 @@ export const GalleryContainer = ({
   ...props
 }: HTMLMotionProps<"div">) => {
   const { scrollYProgress } = useContainerScrollContext();
-  const rotateX = useTransform(scrollYProgress, [0, 0.5], [75, 0]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.5], [45, 0]);
   const scale = useTransform(scrollYProgress, [0.5, 0.9], [1.2, 1]);
 
   return (
     <motion.div
       className={cn(
-        "relative grid size-full grid-cols-3 gap-2 rounded-2xl",
+        "relative grid size-full grid-cols-2 gap-2 rounded-2xl lg:grid-cols-3",
         className,
       )}
       style={{
@@ -183,7 +183,45 @@ const COL_Y_RANGES: [string, string][] = [
   ["0%", "-12%"],
 ];
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
+  React.useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener("resize", handler, { passive: true });
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return isDesktop;
+}
+
 export function ImageGallery({ images }: { images: GalleryImage[] }) {
+  const isDesktop = useIsDesktop();
+
+  if (!isDesktop) {
+    const cols: GalleryImage[][] = [[], []];
+    images.forEach((img, i) => cols[i % 2].push(img));
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        {cols.map((col, colIndex) => (
+          <ContainerStagger key={colIndex} className="flex flex-col gap-2">
+            {col.map((image, imgIndex) => (
+              <ContainerAnimated key={`${image.src}-${imgIndex}`}>
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full rounded-[20px] object-cover shadow-soft"
+                />
+              </ContainerAnimated>
+            ))}
+          </ContainerStagger>
+        ))}
+      </div>
+    );
+  }
+
   const columns: GalleryImage[][] = [[], [], []];
   images.forEach((img, i) => columns[i % 3].push(img));
 
