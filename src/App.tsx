@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ExternalLink,
@@ -484,62 +484,131 @@ function ProductGrid({
   variant?: "grid" | "scroll";
 }) {
   const isScroll = variant === "scroll";
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [scrollState, setScrollState] = useState({ height: 0, x: 0 });
+
+  useEffect(() => {
+    if (!isScroll) return;
+
+    let frame = 0;
+
+    function update() {
+      const wrapper = scrollRef.current;
+      const sticky = stickyRef.current;
+      const track = trackRef.current;
+
+      if (!wrapper || !sticky || !track || window.innerWidth < 1024) {
+        setScrollState({ height: 0, x: 0 });
+        return;
+      }
+
+      const stickyHeight = Math.min(window.innerHeight - 112, 720);
+      const maxShift = Math.max(track.scrollWidth - sticky.clientWidth, 0);
+      const height = stickyHeight + maxShift + 48;
+      const travel = Math.max(height - stickyHeight, 1);
+      const rect = wrapper.getBoundingClientRect();
+      const progress = Math.min(1, Math.max(0, -rect.top / travel));
+
+      setScrollState({
+        height,
+        x: Math.round(progress * maxShift),
+      });
+    }
+
+    function scheduleUpdate() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    }
+
+    update();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [isScroll, products.length]);
+
+  const cards = products.map((product, index) => (
+    <motion.article
+      key={product.id}
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ delay: Math.min(index * 0.04, 0.16) }}
+      className={`group overflow-hidden rounded-[30px] border bg-white/48 shadow-sm transition hover:-translate-y-1 hover:shadow-soft ${
+        isScroll
+          ? "w-[82vw] shrink-0 snap-start sm:w-[420px] lg:w-[390px]"
+          : ""
+      }`}
+    >
+      <div className="aspect-[4/5] overflow-hidden bg-muted">
+        <img
+          src={product.image}
+          alt={product.title}
+          width="900"
+          height="1125"
+          loading="lazy"
+          className="size-full object-cover transition duration-700 group-hover:scale-105"
+        />
+      </div>
+      <div className="p-5">
+        <div className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-normal text-secondary">
+          <span>{product.category}</span>
+          <span>{product.status}</span>
+        </div>
+        <h2 className="mt-3 font-display text-3xl font-semibold">
+          {product.title}
+        </h2>
+        <p className="mt-3 min-h-20 text-sm leading-6 text-foreground/68">
+          {product.description}
+        </p>
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <span className="font-semibold">{product.price}</span>
+          <Link
+            className="soft-button"
+            to={`/contacts?type=catalog&product=${product.id}`}
+          >
+            Запросить
+          </Link>
+        </div>
+      </div>
+    </motion.article>
+  ));
+
+  if (isScroll) {
+    return (
+      <div
+        ref={scrollRef}
+        className="-mx-4 sm:-mx-6 lg:-mx-8"
+        style={scrollState.height ? { height: scrollState.height } : undefined}
+      >
+        <div
+          ref={stickyRef}
+          className="overflow-x-auto px-4 pb-5 sm:px-6 lg:sticky lg:top-24 lg:h-[min(calc(100dvh-7rem),720px)] lg:overflow-hidden lg:px-8 [scrollbar-color:rgb(155_98_70_/_0.45)_transparent] [scrollbar-width:thin]"
+        >
+          <div
+            ref={trackRef}
+            className="flex snap-x gap-5 transition-transform duration-75 ease-out lg:will-change-transform"
+            style={{
+              transform: scrollState.x
+                ? `translate3d(-${scrollState.x}px, 0, 0)`
+                : undefined,
+            }}
+          >
+            {cards}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={
-        isScroll
-          ? "-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-5 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 [scrollbar-color:rgb(155_98_70_/_0.45)_transparent] [scrollbar-width:thin]"
-          : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-      }
-    >
-      {products.map((product, index) => (
-        <motion.article
-          key={product.id}
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-10%" }}
-          transition={{ delay: Math.min(index * 0.04, 0.16) }}
-          className={`group overflow-hidden rounded-[30px] border bg-white/48 shadow-sm transition hover:-translate-y-1 hover:shadow-soft ${
-            isScroll
-              ? "w-[82vw] shrink-0 snap-start sm:w-[420px] lg:w-[390px]"
-              : ""
-          }`}
-        >
-          <div className="aspect-[4/5] overflow-hidden bg-muted">
-            <img
-              src={product.image}
-              alt={product.title}
-              width="900"
-              height="1125"
-              loading="lazy"
-              className="size-full object-cover transition duration-700 group-hover:scale-105"
-            />
-          </div>
-          <div className="p-5">
-            <div className="flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-normal text-secondary">
-              <span>{product.category}</span>
-              <span>{product.status}</span>
-            </div>
-            <h2 className="mt-3 font-display text-3xl font-semibold">
-              {product.title}
-            </h2>
-            <p className="mt-3 min-h-20 text-sm leading-6 text-foreground/68">
-              {product.description}
-            </p>
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <span className="font-semibold">{product.price}</span>
-              <Link
-                className="soft-button"
-                to={`/contacts?type=catalog&product=${product.id}`}
-              >
-                Запросить
-              </Link>
-            </div>
-          </div>
-        </motion.article>
-      ))}
-    </div>
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{cards}</div>
   );
 }
 
