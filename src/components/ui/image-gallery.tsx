@@ -1,13 +1,7 @@
-import * as React from "react";
-import {
-  type HTMLMotionProps,
-  type MotionValue,
-  type Variants,
-  motion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import React from "react";
 import { cn } from "@/lib/utils";
+import { useInView } from "framer-motion";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 export interface GalleryImage {
   alt: string;
@@ -16,238 +10,56 @@ export interface GalleryImage {
   placeholder?: string;
 }
 
-const SPRING_CONFIG = {
-  type: "spring" as const,
-  stiffness: 100,
-  damping: 16,
-  mass: 0.75,
-  restDelta: 0.005,
-  duration: 0.3,
-};
-
-const blurVariants: Variants = {
-  hidden: { filter: "blur(10px)", opacity: 0 },
-  visible: { filter: "blur(0px)", opacity: 1 },
-};
-
-interface ContainerScrollContextValue {
-  scrollYProgress: MotionValue<number>;
+interface AnimatedImageProps {
+  alt: string;
+  src: string;
+  ratio: number;
+  placeholder?: string;
 }
 
-const ContainerScrollContext = React.createContext<
-  ContainerScrollContextValue | undefined
->(undefined);
-
-function useContainerScrollContext() {
-  const context = React.useContext(ContainerScrollContext);
-  if (!context) {
-    throw new Error(
-      "useContainerScrollContext must be used within a ContainerScroll",
-    );
-  }
-  return context;
-}
-
-export const ContainerScroll = ({
-  children,
-  className,
-  style,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: scrollRef });
-  return (
-    <ContainerScrollContext.Provider value={{ scrollYProgress }}>
-      <div
-        ref={scrollRef}
-        className={cn("relative min-h-[120vh]", className)}
-        style={{
-          perspective: "1000px",
-          perspectiveOrigin: "center top",
-          transformStyle: "preserve-3d",
-          ...style,
-        }}
-        {...props}
-      >
-        {children}
-      </div>
-    </ContainerScrollContext.Provider>
-  );
-};
-
-export const ContainerSticky = ({
-  className,
-  style,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "sticky left-0 top-0 min-h-[75vh] w-full overflow-hidden",
-      className,
-    )}
-    style={{
-      perspective: "1000px",
-      perspectiveOrigin: "center top",
-      transformStyle: "preserve-3d",
-      transformOrigin: "50% 50%",
-      ...style,
-    }}
-    {...props}
-  />
-);
-
-export const GalleryContainer = ({
-  children,
-  className,
-  style,
-  ...props
-}: HTMLMotionProps<"div">) => {
-  const { scrollYProgress } = useContainerScrollContext();
-  const rotateX = useTransform(scrollYProgress, [0, 0.5], [45, 0]);
-  const scale = useTransform(scrollYProgress, [0.5, 0.9], [1.2, 1]);
+function AnimatedImage({ alt, src, ratio, placeholder }: AnimatedImageProps) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "0px 0px -8% 0px" });
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [imgSrc, setImgSrc] = React.useState(src);
 
   return (
-    <motion.div
-      className={cn(
-        "relative grid size-full grid-cols-2 gap-2 rounded-2xl lg:grid-cols-3",
-        className,
-      )}
-      style={{
-        rotateX,
-        scale,
-        transformStyle: "preserve-3d",
-        perspective: "1000px",
-        ...style,
-      }}
-      {...props}
+    <AspectRatio
+      ref={ref}
+      ratio={ratio}
+      className="relative size-full overflow-hidden rounded-[24px] border bg-accent"
     >
-      {children}
-    </motion.div>
+      <img
+        alt={alt}
+        src={imgSrc}
+        className={cn(
+          "size-full object-cover opacity-0 transition-all duration-700 ease-in-out",
+          { "opacity-100": isInView && !isLoading },
+        )}
+        onLoad={() => setIsLoading(false)}
+        loading="lazy"
+        decoding="async"
+        onError={() => {
+          if (placeholder) setImgSrc(placeholder);
+        }}
+      />
+    </AspectRatio>
   );
-};
-
-export const GalleryCol = ({
-  className,
-  style,
-  yRange = ["0%", "-10%"],
-  ...props
-}: HTMLMotionProps<"div"> & { yRange?: [string, string] }) => {
-  const { scrollYProgress } = useContainerScrollContext();
-  const y = useTransform(scrollYProgress, [0.5, 1], yRange);
-
-  return (
-    <motion.div
-      className={cn("relative flex w-full flex-col gap-2", className)}
-      style={{ y, ...style }}
-      {...props}
-    />
-  );
-};
-
-export const ContainerStagger = React.forwardRef<
-  HTMLDivElement,
-  HTMLMotionProps<"div">
->(({ className, viewport, transition, ...props }, ref) => (
-  <motion.div
-    ref={ref}
-    className={cn("relative", className)}
-    initial="hidden"
-    whileInView="visible"
-    viewport={{ once: true, ...viewport }}
-    transition={{
-      staggerChildren: transition?.staggerChildren ?? 0.2,
-      ...transition,
-    }}
-    {...props}
-  />
-));
-ContainerStagger.displayName = "ContainerStagger";
-
-export const ContainerAnimated = React.forwardRef<
-  HTMLDivElement,
-  HTMLMotionProps<"div">
->(({ className, ...props }, ref) => (
-  <motion.div
-    ref={ref}
-    className={cn(className)}
-    variants={blurVariants}
-    transition={SPRING_CONFIG}
-    {...props}
-  />
-));
-ContainerAnimated.displayName = "ContainerAnimated";
-
-const COL_Y_RANGES: [string, string][] = [
-  ["0%", "-8%"],
-  ["0%", "5%"],
-  ["0%", "-12%"],
-];
-
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = React.useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1024,
-  );
-  React.useEffect(() => {
-    const handler = () => setIsDesktop(window.innerWidth >= 1024);
-    window.addEventListener("resize", handler, { passive: true });
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return isDesktop;
 }
 
 export function ImageGallery({ images }: { images: GalleryImage[] }) {
-  const isDesktop = useIsDesktop();
-
-  if (!isDesktop) {
-    const cols: GalleryImage[][] = [[], []];
-    images.forEach((img, i) => cols[i % 2].push(img));
-    return (
-      <div className="grid grid-cols-2 gap-2">
-        {cols.map((col, colIndex) => (
-          <ContainerStagger key={colIndex} className="flex flex-col gap-2">
-            {col.map((image, imgIndex) => (
-              <ContainerAnimated key={`${image.src}-${imgIndex}`}>
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full rounded-[20px] object-cover shadow-soft"
-                />
-              </ContainerAnimated>
-            ))}
-          </ContainerStagger>
-        ))}
-      </div>
-    );
-  }
-
-  const columns: GalleryImage[][] = [[], [], []];
-  images.forEach((img, i) => columns[i % 3].push(img));
-
   return (
-    <ContainerScroll>
-      <ContainerSticky>
-        <GalleryContainer>
-          {columns.map((col, colIndex) => (
-            <GalleryCol key={colIndex} yRange={COL_Y_RANGES[colIndex]}>
-              <ContainerStagger>
-                {col.map((image, imgIndex) => (
-                  <ContainerAnimated key={`${image.src}-${imgIndex}`}>
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full rounded-[24px] object-cover shadow-soft"
-                    />
-                  </ContainerAnimated>
-                ))}
-              </ContainerStagger>
-            </GalleryCol>
-          ))}
-        </GalleryContainer>
-      </ContainerSticky>
-    </ContainerScroll>
+    <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 [&>*]:mb-5">
+      {images.map((image, index) => (
+        <div key={`${image.src}-${index}`} className="break-inside-avoid">
+          <AnimatedImage
+            src={image.src}
+            alt={image.alt}
+            ratio={image.ratio ?? 0.75}
+            placeholder={image.placeholder}
+          />
+        </div>
+      ))}
+    </div>
   );
 }
