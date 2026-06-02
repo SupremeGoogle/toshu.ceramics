@@ -456,7 +456,6 @@ function FeaturedCatalog({ content }: { content: SiteContent }) {
         eyebrow="Каталог"
         title="Предметы для тихих ритуалов"
         text="Посуда, вазы и декор создаются небольшими партиями. Наличие и индивидуальные повторы уточняются через заявку."
-        cta={{ label: "Весь каталог", href: "/catalog" }}
       />
       <ProductGrid products={content.products.slice(0, 6)} variant="scroll" />
     </section>
@@ -585,7 +584,6 @@ function AboutPreview({ content }: { content: SiteContent }) {
           eyebrow="О мастерской"
           title="Форма, тактильность и спокойная повседневность"
           text={content.about.text}
-          cta={{ label: "Больше о нас", href: "/about" }}
         />
         <p className="text-lg leading-8 text-foreground/70">
           {content.about.philosophy}
