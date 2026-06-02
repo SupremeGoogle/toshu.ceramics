@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useId, useRef, useState } from "react";
 import {
   ArrowRight,
   ExternalLink,
@@ -1173,6 +1173,7 @@ function AdminPage({
             <AdminBlockEditor
               active={active}
               content={draftContent}
+              adminPassword={password}
               onChange={(next) => {
                 updateDraft(next);
                 setStatus("");
@@ -1198,10 +1199,12 @@ function AdminPage({
 function AdminBlockEditor({
   active,
   content,
+  adminPassword,
   onChange,
 }: {
   active: keyof SiteContent;
   content: SiteContent;
+  adminPassword: string;
   onChange: (content: SiteContent) => void;
 }) {
   const setBlock = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) => {
@@ -1244,11 +1247,11 @@ function AdminBlockEditor({
   }
 
   if (active === "products") {
-    return <AdminProducts content={content} onChange={onChange} />;
+    return <AdminProducts content={content} adminPassword={adminPassword} onChange={onChange} />;
   }
 
   if (active === "gallery") {
-    return <AdminImageList content={content} onChange={onChange} />;
+    return <AdminImageList content={content} adminPassword={adminPassword} onChange={onChange} />;
   }
 
   if (active === "about") {
@@ -1295,9 +1298,11 @@ function AdminBlockEditor({
 
 function AdminProducts({
   content,
+  adminPassword,
   onChange,
 }: {
   content: SiteContent;
+  adminPassword: string;
   onChange: (content: SiteContent) => void;
 }) {
   const updateProduct = (index: number, patch: Partial<Product>) => {
@@ -1318,6 +1323,11 @@ function AdminProducts({
             <AdminInput label="Цена" value={product.price} onChange={(value) => updateProduct(index, { price: value })} />
             <AdminInput label="Статус" value={product.status} onChange={(value) => updateProduct(index, { status: value })} />
             <AdminInput label="Фото" value={product.image} onChange={(value) => updateProduct(index, { image: value })} />
+            <AdminImageUpload
+              adminPassword={adminPassword}
+              label="Загрузить фото изделия"
+              onUploaded={({ url }) => updateProduct(index, { image: url })}
+            />
             <AdminTextarea label="Описание" value={product.description} onChange={(value) => updateProduct(index, { description: value })} />
             <button
               className="soft-button w-fit"
@@ -1358,9 +1368,11 @@ function AdminProducts({
 
 function AdminImageList({
   content,
+  adminPassword,
   onChange,
 }: {
   content: SiteContent;
+  adminPassword: string;
   onChange: (content: SiteContent) => void;
 }) {
   const updateImage = (index: number, patch: Partial<GalleryImage>) => {
@@ -1377,6 +1389,11 @@ function AdminImageList({
           <img src={image.src} alt={image.alt} className="max-h-44 w-full rounded-2xl object-contain" />
           <div className="grid gap-3 md:grid-cols-2">
             <AdminInput label="Ссылка на фото" value={image.src} onChange={(value) => updateImage(index, { src: value })} />
+            <AdminImageUpload
+              adminPassword={adminPassword}
+              label="Загрузить фото"
+              onUploaded={({ url, ratio }) => updateImage(index, { src: url, ratio })}
+            />
             <AdminInput label="Описание" value={image.alt} onChange={(value) => updateImage(index, { alt: value })} />
             <AdminInput
               label="Пропорция"
@@ -1413,6 +1430,23 @@ function AdminImageList({
       >
         Добавить фото по ссылке
       </button>
+      <AdminImageUpload
+        adminPassword={adminPassword}
+        label="Добавить фото с устройства"
+        onUploaded={({ url, fileName, ratio }) =>
+          onChange({
+            ...content,
+            gallery: [
+              ...content.gallery,
+              {
+                src: url,
+                alt: fileName.replace(/\.[^/.]+$/, "") || "Фото Toshu Ceramics",
+                ratio,
+              },
+            ],
+          })
+        }
+      />
     </div>
   );
 }
@@ -1448,6 +1482,135 @@ function AdminOptions({
       </button>
     </div>
   );
+}
+
+type UploadedImage = {
+  url: string;
+  fileName: string;
+  ratio: number;
+};
+
+function AdminImageUpload({
+  adminPassword,
+  label,
+  onUploaded,
+}: {
+  adminPassword: string;
+  label: string;
+  onUploaded: (image: UploadedImage) => void;
+}) {
+  const inputId = useId();
+  const [status, setStatus] = useState("");
+  const [isUploading, setUploading] = useState(false);
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setStatus("Можно загрузить только изображение.");
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setStatus("Файл слишком большой. Загрузите изображение до 4 MB.");
+      return;
+    }
+
+    setUploading(true);
+    setStatus("Загружаем фото...");
+
+    try {
+      const [dataUrl, ratio] = await Promise.all([
+        readFileAsDataUrl(file),
+        getImageRatio(file),
+      ]);
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          dataUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text);
+      }
+
+      const result = (await response.json()) as { url: string };
+      onUploaded({
+        url: result.url,
+        fileName: file.name,
+        ratio,
+      });
+      setStatus("Фото загружено. Не забудьте сохранить изменения.");
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? `Не удалось загрузить: ${error.message}`
+          : "Не удалось загрузить фото.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-2 text-sm font-semibold">
+      <span>{label}</span>
+      <label className="soft-button w-fit cursor-pointer">
+        {isUploading ? "Загружаем..." : "Выбрать файл"}
+        <input
+          id={inputId}
+          className="sr-only"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          disabled={isUploading}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (file) {
+              void handleFile(file);
+            }
+          }}
+        />
+      </label>
+      {status ? (
+        <p className="text-xs font-medium leading-5 text-foreground/62" aria-live="polite">
+          {status}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Не удалось прочитать файл."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function getImageRatio(file: File) {
+  return new Promise<number>((resolve) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      const ratio = image.naturalWidth / Math.max(image.naturalHeight, 1);
+      URL.revokeObjectURL(objectUrl);
+      resolve(Number.isFinite(ratio) && ratio > 0 ? ratio : 0.75);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(0.75);
+    };
+    image.src = objectUrl;
+  });
 }
 
 function AdminInput({
