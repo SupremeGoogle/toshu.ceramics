@@ -33,6 +33,7 @@
     @apply m-0 min-h-dvh bg-background text-foreground antialiased;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
 
   :where(a, button, input, textarea, select):focus-visible {

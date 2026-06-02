@@ -187,7 +187,7 @@ function PublicSite({ content }: { content: SiteContent }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh overflow-x-clip bg-background">
+    <div className="min-h-dvh bg-background">
       <SiteFavicon />
       <ScrollToTop />
       <RouteSeo content={content} />

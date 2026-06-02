@@ -60,7 +60,7 @@ export const ContainerScroll = ({
     <ContainerScrollContext.Provider value={{ scrollYProgress }}>
       <div
         ref={scrollRef}
-        className={cn("relative min-h-[200vh]", className)}
+        className={cn("relative min-h-[400vh]", className)}
         style={{
           perspective: "1000px",
           perspectiveOrigin: "center top",
@@ -105,8 +105,8 @@ export const GalleryContainer = ({
   ...props
 }: HTMLMotionProps<"div">) => {
   const { scrollYProgress } = useContainerScrollContext();
-  const rotateX = useTransform(scrollYProgress, [0, 0.5], [75, 0]);
-  const scale = useTransform(scrollYProgress, [0.5, 0.9], [1.2, 1]);
+  const rotateX = useTransform(scrollYProgress, [0.15, 0.55], [75, 0]);
+  const scale = useTransform(scrollYProgress, [0.55, 0.85], [1.1, 1]);
 
   return (
     <motion.div
@@ -136,7 +136,7 @@ export const GalleryCol = ({
   ...props
 }: HTMLMotionProps<"div"> & { yRange?: [string, string] }) => {
   const { scrollYProgress } = useContainerScrollContext();
-  const y = useTransform(scrollYProgress, [0.5, 1], yRange);
+  const y = useTransform(scrollYProgress, [0.55, 0.92], yRange);
 
   return (
     <motion.div
