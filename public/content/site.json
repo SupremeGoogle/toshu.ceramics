@@ -37,20 +37,20 @@
   "products": [
     {
       "id": "morning-cup",
-      "title": "Чашка «Утро»",
-      "category": "Посуда",
-      "description": "Белая глазурь, объём 280 мл. Спокойная форма для кофе, чая и маленьких пауз.",
-      "price": "по запросу",
-      "image": "/images/gallery/IMG_7151.webp",
+      "title": "Стакан",
+      "category": "EARTH",
+      "description": "Спокойная форма для кофе, чая и маленьких пауз.",
+      "price": "От 1000 руб.",
+      "image": "/images/uploads/1780428327746-img-7353.webp",
       "status": "доступно"
     },
     {
       "id": "bowls-pair",
-      "title": "Пара пиал",
-      "category": "Посуда",
-      "description": "Терракота и матовая глазурь. Для чая, ягод, соусов и сервировки.",
-      "price": "по запросу",
-      "image": "/images/gallery/IMG_8423.webp",
+      "title": "Набор десертных тарелок",
+      "category": "TRACE",
+      "description": "Белая глазурь. Темный след. И тишина.",
+      "price": "От 3000 руб.",
+      "image": "/images/uploads/1780428397578-img-7425.webp",
       "status": "на заказ"
     },
     {
