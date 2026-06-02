@@ -1,7 +1,6 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   ArrowRight,
-  Camera,
   ExternalLink,
   Gift,
   Mail,
@@ -132,20 +131,24 @@ function SiteDataProvider() {
           return;
         }
 
-        let response = await fetch("/api/get-content", {
+        const response = await fetch("/api/get-content", {
           cache: "no-store",
         });
 
-        if (!response.ok) {
-          response = await fetch("/content/site.json", {
-            cache: "no-store",
-          });
+        const contentType = response.headers.get("content-type") ?? "";
+        if (response.ok && contentType.includes("application/json")) {
+          setContent((await response.json()) as SiteContent);
+          return;
         }
 
-        if (!response.ok) {
+        const fallback = await fetch("/content/site.json", {
+            cache: "no-store",
+          });
+
+        if (!fallback.ok) {
           throw new Error("Content request failed");
         }
-        setContent((await response.json()) as SiteContent);
+        setContent((await fallback.json()) as SiteContent);
       } catch {
         setError("Не удалось загрузить данные сайта.");
       }
@@ -193,17 +196,18 @@ function PublicSite({ content }: { content: SiteContent }) {
       />
       <main id="content">
         <Routes>
-      <Route path="/" element={<HomePage content={content} />} />
-      <Route path="/catalog" element={<CatalogPage content={content} />} />
-      <Route path="/about" element={<AboutPage content={content} />} />
-      <Route
-        path="/certificate"
-        element={<CertificatePage content={content} />}
-      />
-      <Route
-        path="/contacts"
-        element={<ContactsPage content={content} />}
+          <Route path="/" element={<HomePage content={content} />} />
+          <Route path="/catalog" element={<CatalogPage content={content} />} />
+          <Route path="/about" element={<AboutPage content={content} />} />
+          <Route
+            path="/certificate"
+            element={<CertificatePage content={content} />}
           />
+          <Route
+            path="/contacts"
+            element={<ContactsPage content={content} />}
+          />
+          <Route path="/privacy" element={<PrivacyPage content={content} />} />
         </Routes>
       </main>
       <Footer content={content} />
@@ -240,6 +244,11 @@ function RouteSeo({ content }: { content: SiteContent }) {
         title: "Контакты | Toshu Ceramics",
         description:
           "Контакты Toshu Ceramics: мастерская в Москве, заявки на изделия, подарочные сертификаты и сотрудничество.",
+      },
+      "/privacy": {
+        title: "Согласие на обработку персональных данных | Toshu Ceramics",
+        description:
+          "Условия обработки персональных данных при отправке заявки на сайте Toshu Ceramics.",
       },
     };
     const seo = seoByPath[location.pathname] ?? seoByPath["/"];
@@ -324,7 +333,7 @@ function Header({
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
           <a className="soft-button" href={content.brand.instagram}>
-            <Camera size={17} aria-hidden="true" />
+            <InstagramIcon className="size-[17px]" aria-hidden="true" />
             Instagram
           </a>
           <Link className="clay-button" to="/contacts">
@@ -449,7 +458,7 @@ function FeaturedCatalog({ content }: { content: SiteContent }) {
         text="Посуда, вазы и декор создаются небольшими партиями. Наличие и индивидуальные повторы уточняются через заявку."
         cta={{ label: "Весь каталог", href: "/catalog" }}
       />
-      <ProductGrid products={content.products.slice(0, 6)} />
+      <ProductGrid products={content.products.slice(0, 6)} variant="scroll" />
     </section>
   );
 }
@@ -468,9 +477,23 @@ function CatalogPage({ content }: { content: SiteContent }) {
   );
 }
 
-function ProductGrid({ products }: { products: Product[] }) {
+function ProductGrid({
+  products,
+  variant = "grid",
+}: {
+  products: Product[];
+  variant?: "grid" | "scroll";
+}) {
+  const isScroll = variant === "scroll";
+
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className={
+        isScroll
+          ? "-mx-4 flex snap-x gap-5 overflow-x-auto px-4 pb-5 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 [scrollbar-color:rgb(155_98_70_/_0.45)_transparent] [scrollbar-width:thin]"
+          : "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      }
+    >
       {products.map((product, index) => (
         <motion.article
           key={product.id}
@@ -478,7 +501,11 @@ function ProductGrid({ products }: { products: Product[] }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-10%" }}
           transition={{ delay: Math.min(index * 0.04, 0.16) }}
-          className="group overflow-hidden rounded-[30px] border bg-white/48 shadow-sm transition hover:-translate-y-1 hover:shadow-soft"
+          className={`group overflow-hidden rounded-[30px] border bg-white/48 shadow-sm transition hover:-translate-y-1 hover:shadow-soft ${
+            isScroll
+              ? "w-[82vw] shrink-0 snap-start sm:w-[420px] lg:w-[390px]"
+              : ""
+          }`}
         >
           <div className="aspect-[4/5] overflow-hidden bg-muted">
             <img
@@ -604,11 +631,61 @@ function ContactsPage({ content }: { content: SiteContent }) {
           <ContactLink icon={<MapPin size={18} />} label={content.brand.address} />
           <ContactLink icon={<Phone size={18} />} label={content.brand.phone} href={`tel:${content.brand.phone.replace(/\D/g, "")}`} />
           <ContactLink icon={<Mail size={18} />} label={content.brand.email} href={`mailto:${content.brand.email}`} />
+          <ContactLink icon={<InstagramIcon className="size-[18px]" />} label="Instagram" href={content.brand.instagram} />
           <ContactLink icon={<MessageCircle size={18} />} label="Telegram" href={content.brand.telegram} />
           <ContactLink icon={<MessageCircle size={18} />} label="WhatsApp" href={content.brand.whatsapp} />
         </div>
       </div>
       <LeadForm content={content} type="catalog" />
+    </section>
+  );
+}
+
+function PrivacyPage({ content }: { content: SiteContent }) {
+  return (
+    <section className="section-shell">
+      <PageTitle
+        eyebrow="Персональные данные"
+        title="Согласие на обработку персональных данных"
+        text="Перед отправкой формы вы подтверждаете, что ознакомились с условиями обработки персональных данных и соглашаетесь на обратную связь по вашей заявке."
+      />
+      <article className="max-w-4xl rounded-[32px] border bg-white/50 p-6 leading-8 shadow-sm md:p-8">
+        <h2 className="font-display text-3xl font-semibold">
+          Какие данные обрабатываются
+        </h2>
+        <p className="mt-4 text-foreground/72">
+          При отправке формы Toshu Ceramics может получить ваше имя, телефон,
+          email, выбранное направление заявки и текст комментария. Эти данные
+          используются только для связи с вами, уточнения деталей заказа,
+          сертификата или другого обращения.
+        </p>
+        <h2 className="mt-8 font-display text-3xl font-semibold">
+          Для чего нужны данные
+        </h2>
+        <ul className="mt-4 grid gap-3 text-foreground/72">
+          <li>Ответить на заявку и согласовать детали обращения.</li>
+          <li>Подготовить информацию по изделию или сертификату.</li>
+          <li>Связаться с вами по телефону, email или в мессенджере.</li>
+        </ul>
+        <h2 className="mt-8 font-display text-3xl font-semibold">
+          Хранение и передача
+        </h2>
+        <p className="mt-4 text-foreground/72">
+          Данные не публикуются на сайте и не передаются третьим лицам для
+          рекламных рассылок. Доступ к заявкам имеет только команда мастерской
+          и технические сервисы, которые помогают принять и обработать форму.
+        </p>
+        <h2 className="mt-8 font-display text-3xl font-semibold">
+          Как отозвать согласие
+        </h2>
+        <p className="mt-4 text-foreground/72">
+          Вы можете попросить удалить или уточнить ваши данные, написав на{" "}
+          <a className="font-semibold underline" href={`mailto:${content.brand.email}`}>
+            {content.brand.email}
+          </a>
+          .
+        </p>
+      </article>
     </section>
   );
 }
@@ -668,6 +745,7 @@ function LeadForm({
   type: LeadType;
 }) {
   const [status, setStatus] = useState("");
+  const [isSuccess, setSuccess] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -681,6 +759,7 @@ function LeadForm({
     }
 
     setSubmitting(true);
+    setSuccess(false);
     setStatus("");
     try {
       const response = await fetch("/api/submit-lead", {
@@ -697,6 +776,7 @@ function LeadForm({
         throw new Error("Submit failed");
       }
       setStatus("Заявка отправлена. Мы скоро свяжемся с вами.");
+      setSuccess(true);
       form.reset();
     } catch {
       setStatus(
@@ -705,6 +785,35 @@ function LeadForm({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="grid gap-3">
+        <div
+          className="rounded-[26px] border bg-white/70 p-5"
+          role="status"
+          aria-live="polite"
+        >
+          <h3 className="font-display text-3xl font-semibold">
+            Заявка отправлена
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-foreground/70">
+            Спасибо. Мы получили обращение и скоро свяжемся с вами.
+          </p>
+          <button
+            className="soft-button mt-4"
+            type="button"
+            onClick={() => {
+              setSuccess(false);
+              setStatus("");
+            }}
+          >
+            Отправить ещё одну заявку
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -747,7 +856,10 @@ function LeadForm({
         />
         <span>
           Согласен/согласна на обработку персональных данных для обратной связи
-          по заявке.
+          по заявке.{" "}
+          <Link className="font-semibold underline" to="/privacy">
+            Ознакомиться с условиями
+          </Link>
         </span>
       </label>
       <button className="clay-button" type="submit" disabled={isSubmitting}>
@@ -774,33 +886,18 @@ function AdminPage({
     () => sessionStorage.getItem("toshu-admin-password") ?? "",
   );
   const [isUnlocked, setUnlocked] = useState(Boolean(password));
-  const [draft, setDraft] = useState(() => JSON.stringify(content, null, 2));
+  const [draftContent, setDraftContent] = useState<SiteContent>(content);
   const [active, setActive] = useState<keyof SiteContent>("hero");
   const [status, setStatus] = useState("");
 
-  const parsedDraft = useMemo(() => {
-    try {
-      return JSON.parse(draft) as SiteContent;
-    } catch {
-      return null;
-    }
-  }, [draft]);
-
-  function updateBlock(block: keyof SiteContent, value: string) {
-    if (!parsedDraft) return;
-    const next = { ...parsedDraft, [block]: JSON.parse(value) } as SiteContent;
+  function updateDraft(next: SiteContent) {
+    setDraftContent(next);
     const formatted = JSON.stringify(next, null, 2);
-    setDraft(formatted);
     localStorage.setItem("toshu-content-draft", formatted);
     onDraftChange(next);
   }
 
   async function saveContent() {
-    if (!parsedDraft) {
-      setStatus("JSON содержит ошибку. Проверьте текущий блок.");
-      return;
-    }
-
     setStatus("Сохраняем изменения...");
     const response = await fetch("/api/save-content", {
       method: "POST",
@@ -808,7 +905,7 @@ function AdminPage({
         "Content-Type": "application/json",
         "x-admin-password": password,
       },
-      body: JSON.stringify(parsedDraft),
+      body: JSON.stringify(draftContent),
     });
 
     if (!response.ok) {
@@ -857,10 +954,6 @@ function AdminPage({
     );
   }
 
-  const blockValue = parsedDraft
-    ? JSON.stringify(parsedDraft[active], null, 2)
-    : "";
-
   return (
     <main className="min-h-dvh bg-background">
       <div className="section-shell">
@@ -878,10 +971,10 @@ function AdminPage({
             </Link>
             <a
               className="soft-button"
-              href={parsedDraft?.brand.leadsSheetUrl || "#"}
+              href={draftContent.brand.leadsSheetUrl || "#"}
               target="_blank"
               rel="noreferrer"
-              aria-disabled={!parsedDraft?.brand.leadsSheetUrl}
+              aria-disabled={!draftContent.brand.leadsSheetUrl}
             >
               Открыть заявки
             </a>
@@ -914,34 +1007,26 @@ function AdminPage({
                 className="soft-button"
                 type="button"
                 onClick={() => {
-                  if (!parsedDraft) return;
-                  onDraftChange(parsedDraft);
-                  localStorage.setItem(
-                    "toshu-content-draft",
-                    JSON.stringify(parsedDraft, null, 2),
-                  );
+                  onDraftChange(draftContent);
+                  localStorage.setItem("toshu-content-draft", JSON.stringify(draftContent, null, 2));
                   setStatus("Черновик применён локально.");
                 }}
               >
                 Применить черновик
               </button>
             </div>
-            <textarea
-              className="min-h-[520px] w-full rounded-2xl border bg-background/75 p-4 font-mono text-sm leading-6"
-              value={blockValue}
-              onChange={(event) => {
-                try {
-                  updateBlock(active, event.target.value);
-                  setStatus("");
-                } catch {
-                  setStatus("В блоке временно невалидный JSON.");
-                }
+            <AdminBlockEditor
+              active={active}
+              content={draftContent}
+              onChange={(next) => {
+                updateDraft(next);
+                setStatus("");
               }}
-              spellCheck={false}
             />
             <p className="mt-3 text-sm text-foreground/64">
-              Меняйте тексты и URL фотографий в выбранном блоке. Когда загрузишь
-              реальные фото в проект, их можно указывать как `/images/name.jpg`.
+              Меняйте тексты и ссылки на фотографии в выбранном блоке. Сайт
+              применит черновик сразу, а кнопка сохранения отправит изменения в
+              постоянное хранилище.
             </p>
             {status ? (
               <p className="mt-3 rounded-2xl bg-white/70 p-3 text-sm">
@@ -952,6 +1037,306 @@ function AdminPage({
         </div>
       </div>
     </main>
+  );
+}
+
+function AdminBlockEditor({
+  active,
+  content,
+  onChange,
+}: {
+  active: keyof SiteContent;
+  content: SiteContent;
+  onChange: (content: SiteContent) => void;
+}) {
+  const setBlock = <K extends keyof SiteContent>(key: K, value: SiteContent[K]) => {
+    onChange({ ...content, [key]: value });
+  };
+
+  if (active === "brand") {
+    const brand = content.brand;
+    const setBrand = (patch: Partial<typeof brand>) => setBlock("brand", { ...brand, ...patch });
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <AdminInput label="Название" value={brand.name} onChange={(value) => setBrand({ name: value })} />
+        <AdminInput label="Подпись" value={brand.tagline} onChange={(value) => setBrand({ tagline: value })} />
+        <AdminTextarea label="Описание" value={brand.description} onChange={(value) => setBrand({ description: value })} />
+        <AdminInput label="Instagram" value={brand.instagram} onChange={(value) => setBrand({ instagram: value })} />
+        <AdminInput label="Telegram" value={brand.telegram} onChange={(value) => setBrand({ telegram: value })} />
+        <AdminInput label="WhatsApp" value={brand.whatsapp} onChange={(value) => setBrand({ whatsapp: value })} />
+        <AdminInput label="Почта" value={brand.email} onChange={(value) => setBrand({ email: value })} />
+        <AdminInput label="Телефон" value={brand.phone} onChange={(value) => setBrand({ phone: value })} />
+        <AdminInput label="Адрес" value={brand.address} onChange={(value) => setBrand({ address: value })} />
+        <AdminInput label="Ссылка на заявки" value={brand.leadsSheetUrl ?? ""} onChange={(value) => setBrand({ leadsSheetUrl: value })} />
+      </div>
+    );
+  }
+
+  if (active === "hero") {
+    const hero = content.hero;
+    const setHero = (patch: Partial<typeof hero>) => setBlock("hero", { ...hero, ...patch });
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <AdminInput label="Надзаголовок" value={hero.eyebrow} onChange={(value) => setHero({ eyebrow: value })} />
+        <AdminInput label="Заголовок" value={hero.title} onChange={(value) => setHero({ title: value })} />
+        <AdminTextarea label="Текст" value={hero.text} onChange={(value) => setHero({ text: value })} />
+        <AdminInput label="Главная кнопка" value={hero.primaryCta} onChange={(value) => setHero({ primaryCta: value })} />
+        <AdminInput label="Вторая кнопка" value={hero.secondaryCta} onChange={(value) => setHero({ secondaryCta: value })} />
+        <AdminInput label="Фото" value={hero.image} onChange={(value) => setHero({ image: value })} />
+        <AdminInput label="Описание фото" value={hero.imageAlt} onChange={(value) => setHero({ imageAlt: value })} />
+      </div>
+    );
+  }
+
+  if (active === "products") {
+    return <AdminProducts content={content} onChange={onChange} />;
+  }
+
+  if (active === "gallery") {
+    return <AdminImageList content={content} onChange={onChange} />;
+  }
+
+  if (active === "about") {
+    const about = content.about;
+    const setAbout = (patch: Partial<typeof about>) => setBlock("about", { ...about, ...patch });
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <AdminInput label="Заголовок" value={about.title} onChange={(value) => setAbout({ title: value })} />
+        <AdminInput label="Фото" value={about.image} onChange={(value) => setAbout({ image: value })} />
+        <AdminTextarea label="Текст" value={about.text} onChange={(value) => setAbout({ text: value })} />
+        <AdminTextarea label="Философия" value={about.philosophy} onChange={(value) => setAbout({ philosophy: value })} />
+      </div>
+    );
+  }
+
+  if (active === "certificate") {
+    const certificate = content.certificate;
+    const setCertificate = (patch: Partial<typeof certificate>) => setBlock("certificate", { ...certificate, ...patch });
+    return (
+      <div className="grid gap-4">
+        <AdminInput label="Заголовок" value={certificate.title} onChange={(value) => setCertificate({ title: value })} />
+        <AdminTextarea label="Текст" value={certificate.text} onChange={(value) => setCertificate({ text: value })} />
+        <AdminOptions
+          label="Варианты"
+          values={certificate.options}
+          onChange={(options) => setCertificate({ options })}
+        />
+      </div>
+    );
+  }
+
+  if (active === "seo") {
+    const seo = content.seo;
+    return (
+      <div className="grid gap-4">
+        <AdminInput label="SEO title" value={seo.title} onChange={(value) => setBlock("seo", { ...seo, title: value })} />
+        <AdminTextarea label="SEO description" value={seo.description} onChange={(value) => setBlock("seo", { ...seo, description: value })} />
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function AdminProducts({
+  content,
+  onChange,
+}: {
+  content: SiteContent;
+  onChange: (content: SiteContent) => void;
+}) {
+  const updateProduct = (index: number, patch: Partial<Product>) => {
+    const products = content.products.map((product, itemIndex) =>
+      itemIndex === index ? { ...product, ...patch } : product,
+    );
+    onChange({ ...content, products });
+  };
+
+  return (
+    <div className="grid gap-4">
+      {content.products.map((product, index) => (
+        <article key={product.id} className="grid gap-4 rounded-3xl border bg-background/55 p-4 md:grid-cols-[140px_1fr]">
+          <img src={product.image} alt={product.title} className="aspect-square w-full rounded-2xl object-cover" />
+          <div className="grid gap-3 md:grid-cols-2">
+            <AdminInput label="Название" value={product.title} onChange={(value) => updateProduct(index, { title: value })} />
+            <AdminInput label="Категория" value={product.category} onChange={(value) => updateProduct(index, { category: value })} />
+            <AdminInput label="Цена" value={product.price} onChange={(value) => updateProduct(index, { price: value })} />
+            <AdminInput label="Статус" value={product.status} onChange={(value) => updateProduct(index, { status: value })} />
+            <AdminInput label="Фото" value={product.image} onChange={(value) => updateProduct(index, { image: value })} />
+            <AdminTextarea label="Описание" value={product.description} onChange={(value) => updateProduct(index, { description: value })} />
+            <button
+              className="soft-button w-fit"
+              type="button"
+              onClick={() => onChange({ ...content, products: content.products.filter((_, itemIndex) => itemIndex !== index) })}
+            >
+              Удалить изделие
+            </button>
+          </div>
+        </article>
+      ))}
+      <button
+        className="clay-button w-fit"
+        type="button"
+        onClick={() =>
+          onChange({
+            ...content,
+            products: [
+              ...content.products,
+              {
+                id: `product-${Date.now()}`,
+                title: "Новое изделие",
+                category: "Керамика",
+                description: "Короткое описание изделия.",
+                price: "по запросу",
+                image: "/images/gallery/IMG_8423.webp",
+                status: "доступно",
+              },
+            ],
+          })
+        }
+      >
+        Добавить изделие
+      </button>
+    </div>
+  );
+}
+
+function AdminImageList({
+  content,
+  onChange,
+}: {
+  content: SiteContent;
+  onChange: (content: SiteContent) => void;
+}) {
+  const updateImage = (index: number, patch: Partial<GalleryImage>) => {
+    const gallery = content.gallery.map((image, itemIndex) =>
+      itemIndex === index ? { ...image, ...patch } : image,
+    );
+    onChange({ ...content, gallery });
+  };
+
+  return (
+    <div className="grid gap-4">
+      {content.gallery.map((image, index) => (
+        <article key={`${image.src}-${index}`} className="grid gap-4 rounded-3xl border bg-background/55 p-4 md:grid-cols-[150px_1fr_auto]">
+          <img src={image.src} alt={image.alt} className="max-h-44 w-full rounded-2xl object-contain" />
+          <div className="grid gap-3 md:grid-cols-2">
+            <AdminInput label="Ссылка на фото" value={image.src} onChange={(value) => updateImage(index, { src: value })} />
+            <AdminInput label="Описание" value={image.alt} onChange={(value) => updateImage(index, { alt: value })} />
+            <AdminInput
+              label="Пропорция"
+              type="number"
+              value={String(image.ratio)}
+              onChange={(value) => updateImage(index, { ratio: Number(value) || 1 })}
+            />
+          </div>
+          <button
+            className="soft-button h-fit"
+            type="button"
+            onClick={() => onChange({ ...content, gallery: content.gallery.filter((_, itemIndex) => itemIndex !== index) })}
+          >
+            Удалить
+          </button>
+        </article>
+      ))}
+      <button
+        className="clay-button w-fit"
+        type="button"
+        onClick={() =>
+          onChange({
+            ...content,
+            gallery: [
+              ...content.gallery,
+              {
+                src: "",
+                alt: "Новое фото Toshu Ceramics",
+                ratio: 0.75,
+              },
+            ],
+          })
+        }
+      >
+        Добавить фото по ссылке
+      </button>
+    </div>
+  );
+}
+
+function AdminOptions({
+  label,
+  values,
+  onChange,
+}: {
+  label: string;
+  values: string[];
+  onChange: (values: string[]) => void;
+}) {
+  return (
+    <div className="grid gap-3">
+      <p className="text-sm font-semibold">{label}</p>
+      {values.map((value, index) => (
+        <div key={`${value}-${index}`} className="flex gap-2">
+          <input
+            className="min-h-12 flex-1 rounded-2xl border bg-background/70 px-4"
+            value={value}
+            onChange={(event) =>
+              onChange(values.map((item, itemIndex) => (itemIndex === index ? event.target.value : item)))
+            }
+          />
+          <button className="soft-button" type="button" onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}>
+            Удалить
+          </button>
+        </div>
+      ))}
+      <button className="soft-button w-fit" type="button" onClick={() => onChange([...values, "Новый вариант"])}>
+        Добавить вариант
+      </button>
+    </div>
+  );
+}
+
+function AdminInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold">
+      {label}
+      <input
+        className="min-h-12 rounded-2xl border bg-background/70 px-4"
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function AdminTextarea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold md:col-span-2">
+      {label}
+      <textarea
+        className="min-h-32 rounded-2xl border bg-background/70 px-4 py-3 leading-7"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
   );
 }
 
@@ -1089,6 +1474,29 @@ function ContactLink({
   );
 }
 
+function InstagramIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      {...props}
+    >
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" />
+      <circle cx="17.4" cy="6.6" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Footer({ content }: { content: SiteContent }) {
   return (
     <footer className="border-t bg-foreground text-background">
@@ -1107,7 +1515,7 @@ function Footer({ content }: { content: SiteContent }) {
         </div>
         <div className="flex flex-wrap gap-3">
           <a className="soft-button !bg-white/10 !text-background" href={content.brand.instagram}>
-            <Camera size={17} /> Instagram
+            <InstagramIcon className="size-[17px]" /> Instagram
           </a>
           <a className="soft-button !bg-white/10 !text-background" href={`mailto:${content.brand.email}`}>
             <Mail size={17} /> Почта

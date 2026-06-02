@@ -41,6 +41,8 @@ export default async function handler(request, response) {
     return response.status(400).send("Invalid content schema");
   }
 
+  let savedToSupabase = false;
+
   if (supabase) {
     try {
       const { error } = await supabase
@@ -51,13 +53,17 @@ export default async function handler(request, response) {
         return response.status(502).send(error.message);
       }
 
-      return response.status(200).json({ ok: true, backend: "supabase" });
+      savedToSupabase = true;
     } catch (error) {
       return response.status(500).send(error.message);
     }
   }
 
   if (!githubToken) {
+    if (savedToSupabase) {
+      return response.status(200).json({ ok: true, backend: "supabase" });
+    }
+
     return response
       .status(500)
       .send("Content storage is not configured");
@@ -96,7 +102,10 @@ export default async function handler(request, response) {
       return response.status(502).send(text);
     }
 
-    return response.status(200).json({ ok: true });
+    return response.status(200).json({
+      ok: true,
+      backend: savedToSupabase ? "supabase+github" : "github",
+    });
   } catch (error) {
     return response.status(500).send(error.message);
   }
