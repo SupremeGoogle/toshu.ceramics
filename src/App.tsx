@@ -785,7 +785,9 @@ function ContactsPage({ content }: { content: SiteContent }) {
           <ContactLink icon={<MessageCircle size={18} />} label="WhatsApp" href={content.brand.whatsapp} />
         </div>
       </div>
-      <LeadForm content={content} type="catalog" />
+      <div className="liquid-glass p-5 md:p-6">
+        <LeadForm content={content} type="catalog" />
+      </div>
     </section>
   );
 }
