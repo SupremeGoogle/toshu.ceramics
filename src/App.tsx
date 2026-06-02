@@ -188,6 +188,7 @@ function PublicSite({ content }: { content: SiteContent }) {
 
   return (
     <div className="min-h-dvh overflow-hidden bg-background">
+      <ScrollToTop />
       <RouteSeo content={content} />
       <Header
         content={content}
@@ -213,6 +214,16 @@ function PublicSite({ content }: { content: SiteContent }) {
       <Footer content={content} />
     </div>
   );
+}
+
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [location.pathname]);
+
+  return null;
 }
 
 function RouteSeo({ content }: { content: SiteContent }) {
@@ -1588,6 +1599,9 @@ function Footer({ content }: { content: SiteContent }) {
             <Mail size={17} /> Почта
           </a>
         </div>
+        <p className="text-sm text-background/55 md:col-span-2">
+          © 2026 {content.brand.name}. Все права защищены.
+        </p>
       </div>
     </footer>
   );
