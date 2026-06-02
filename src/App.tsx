@@ -187,7 +187,7 @@ function PublicSite({ content }: { content: SiteContent }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh overflow-hidden bg-background">
+    <div className="min-h-dvh overflow-x-clip bg-background">
       <SiteFavicon />
       <ScrollToTop />
       <RouteSeo content={content} />
@@ -624,7 +624,7 @@ function ProductGrid({
       transition={{ delay: Math.min(index * 0.04, 0.16) }}
       className={`group overflow-hidden rounded-[30px] border bg-white/48 shadow-sm transition hover:-translate-y-1 hover:shadow-soft ${
         isScroll
-          ? "w-[82vw] shrink-0 snap-start sm:w-[420px] lg:w-[390px]"
+          ? "w-[74vw] max-w-[330px] shrink-0 snap-start sm:w-[420px] sm:max-w-none lg:w-[390px]"
           : ""
       }`}
     >
@@ -675,7 +675,7 @@ function ProductGrid({
         >
           <div
             ref={trackRef}
-            className="flex snap-x gap-5 transition-transform duration-75 ease-out lg:will-change-transform"
+            className="flex snap-x gap-5 pr-[18vw] transition-transform duration-75 ease-out sm:pr-0 lg:will-change-transform"
             style={{
               transform: scrollState.x
                 ? `translate3d(-${scrollState.x}px, 0, 0)`
