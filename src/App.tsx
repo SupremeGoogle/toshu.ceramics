@@ -188,6 +188,7 @@ function PublicSite({ content }: { content: SiteContent }) {
 
   return (
     <div className="min-h-dvh overflow-hidden bg-background">
+      <SiteFavicon />
       <ScrollToTop />
       <RouteSeo content={content} />
       <Header
@@ -214,6 +215,23 @@ function PublicSite({ content }: { content: SiteContent }) {
       <Footer content={content} />
     </div>
   );
+}
+
+function SiteFavicon() {
+  useEffect(() => {
+    document
+      .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
+      .forEach((node) => node.remove());
+
+    const icon = document.createElement("link");
+    icon.rel = "icon";
+    icon.type = "image/png";
+    icon.sizes = "32x32";
+    icon.href = "/favicon-32.png?v=6";
+    document.head.appendChild(icon);
+  }, []);
+
+  return null;
 }
 
 function ScrollToTop() {
