@@ -536,7 +536,7 @@ function ProductGrid({
         return;
       }
 
-      const stickyHeight = Math.min(window.innerHeight - 112, 720);
+      const stickyHeight = sticky.offsetHeight;
       const maxShift = Math.max(track.scrollWidth - sticky.clientWidth, 0);
       const height = stickyHeight + maxShift + 48;
       const travel = Math.max(height - stickyHeight, 1);
@@ -671,7 +671,7 @@ function ProductGrid({
       >
         <div
           ref={stickyRef}
-          className="overflow-x-auto px-4 pb-5 sm:px-6 lg:sticky lg:top-24 lg:h-[min(calc(100dvh-7rem),720px)] lg:overflow-hidden lg:px-8 [scrollbar-color:rgb(155_98_70_/_0.45)_transparent] [scrollbar-width:thin]"
+          className="overflow-x-auto px-4 pb-8 sm:px-6 lg:sticky lg:top-24 lg:min-h-[min(calc(100dvh-7rem),720px)] lg:overflow-x-hidden lg:overflow-y-visible lg:px-8 [scrollbar-color:rgb(155_98_70_/_0.45)_transparent] [scrollbar-width:thin]"
         >
           <div
             ref={trackRef}
